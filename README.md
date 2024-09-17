@@ -75,17 +75,17 @@ WantedBy=multi-user.target
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/your-repo-name.git
+   git clone https://github.com/jwlionking/createDaemonService.git
    ```
 
 2. Change to the repository directory:
    ```bash
-   cd your-repo-name
+   cd createDaemonService
    ```
 
-3. Make the script executable:
+3. Make the script executable if necessary:
    ```bash
-   chmod +x create_service.sh
+   chmod +x createDaemonService.sh
    ```
 
 ## License
@@ -98,4 +98,4 @@ Contributions are welcome! Please submit a pull request or create an issue if yo
 
 ## Author
 
-- **Your Name** - [yourusername](https://github.com/yourusername)
+- **Your Name** - [yourusername](https://github.com/jwlionking)
