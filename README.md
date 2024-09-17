@@ -15,7 +15,7 @@ This bash script creates and configures a systemd service file for a specified d
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/your-repo-name.git
+   git clone https://github.com/jwlionking/createDaemonService.git
    cd your-repo-name
    ```
 
