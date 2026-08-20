@@ -1,101 +1,103 @@
+# createDaemonService
 
-# Systemd Service File Generator
+Generate a systemd unit for a Linux daemon, then optionally enable and start it.
 
-This bash script creates and configures a systemd service file for a specified daemon. The script automates the process of generating a service file, enabling the service on boot, and offers configurable options for the daemon name and other relevant settings.
+The original script wrote `ExecStart=realichaind` (a bare name, no path), always ran as root, and enabled the unit even if the binary did not exist. This version resolves an absolute `ExecStart`, previews the unit, and can run non-interactively.
 
-## Features
+## Requirements
 
-- Prompts for the daemon name.
-- Automatically generates a systemd service file based on the daemon name.
-- Removes the trailing `d` from the daemon name and uses it in the PIDFile path.
-- Enables the service to start on boot after creation.
-- Confirms user input before proceeding with file creation.
+- Linux with systemd
+- bash
+- root for installing into `/etc/systemd/system` (`--dry-run` and `--output` do not need root)
 
 ## Usage
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/jwlionking/createDaemonService.git
-   cd your-repo-name
-   ```
+```bash
+git clone https://github.com/jwlionking/createDaemonService.git
+cd createDaemonService
+chmod +x createDaemonService.sh
+```
 
-2. **Make the script executable**:
-   ```bash
-   chmod +x create_service.sh
-   ```
+Interactive (prompts for name, binary, user, enable, start):
 
-3. **Run the script**:
-   ```bash
-   sudo ./create_service.sh
-   ```
+```bash
+sudo ./createDaemonService.sh
+```
 
-4. **Follow the prompts**:
-   - The script will ask for the daemon name.
-   - It will then confirm the name with you before proceeding.
-   - Once confirmed, it creates a service file in `/etc/systemd/system/`.
+Non-interactive:
 
-5. **Manage the service**:
-   - After the script runs, the service is enabled on boot automatically.
-   - Optionally, you can start the service immediately:
-     ```bash
-     sudo systemctl start <daemon_name>
-     ```
+```bash
+sudo ./createDaemonService.sh \
+  --name realichaind \
+  --exec /usr/local/bin/realichaind \
+  --user realichain \
+  --datadir /var/lib/realichain \
+  --conf /etc/realichain.conf \
+  --enable \
+  --start
+```
 
-## Example
+Preview without writing:
 
-For a daemon called `realichaind`, the script generates the following systemd service file:
+```bash
+./createDaemonService.sh --dry-run --name myapp --exec /usr/local/bin/myapp --user www-data
+```
+
+Remove a unit this script installed:
+
+```bash
+sudo ./createDaemonService.sh --remove realichaind
+```
+
+## Options
+
+| Flag | Meaning |
+| --- | --- |
+| `--name` | Unit name without `.service` |
+| `--exec` | Binary path, or a name on `PATH` |
+| `--args` | Extra `ExecStart` arguments |
+| `--user` / `--group` | Unix user/group (default `root`) |
+| `--datadir` / `--conf` | Append `-datadir=` and `-conf=` (coin-style daemons) |
+| `--type` | `simple` (default), `forking`, or `notify` |
+| `--harden` | Stronger sandbox (`PrivateDevices`, `ProtectHome`, `MemoryDenyWriteExecute`) |
+| `--enable` / `--start` | Enable on boot / start now |
+| `--dry-run` / `--output FILE` | Print or write without touching systemd |
+| `--force` | Overwrite an existing unit |
+| `--remove NAME` | Stop, disable, delete |
+
+`Type=simple` expects the process to stay in the foreground. If your daemon forks, use `--type forking` and keep a PID file, or pass a foreground flag such as `-printtoconsole` / `-daemon=0` via `--args`.
+
+`--harden` is off by default. `MemoryDenyWriteExecute` and `ProtectHome` break a lot of real daemons (JIT runtimes, data under `$HOME`).
+
+## Example unit
 
 ```ini
 [Unit]
-Description=Realichaind daemon
-After=network.target
+Description=Realichain daemon
+After=network-online.target
+Wants=network-online.target
 
 [Service]
-ExecStart=realichaind
-Type=forking
-PIDFile=/root/.realichain/realichain.pid
+Type=simple
+User=realichain
+Group=realichain
+ExecStart=/usr/local/bin/realichaind -printtoconsole -conf=/etc/realichain.conf -datadir=/var/lib/realichain
 Restart=on-failure
-User=root
-Group=root
+RestartSec=10
+LimitNOFILE=65535
 PrivateTmp=true
-PrivateDevices=true
-MemoryDenyWriteExecute=true
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-## Requirements
+## Tests
 
-- A Linux system running systemd (e.g., Ubuntu, Debian, CentOS).
-- `bash` installed (typically default on Linux systems).
-- Root privileges to create service files in `/etc/systemd/system/`.
-
-## Installation
-
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/jwlionking/createDaemonService.git
-   ```
-
-2. Change to the repository directory:
-   ```bash
-   cd createDaemonService
-   ```
-
-3. Make the script executable if necessary:
-   ```bash
-   chmod +x createDaemonService.sh
-   ```
+```bash
+bash tests/test_generate.sh
+```
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Contributions
-
-Contributions are welcome! Please submit a pull request or create an issue if you have any suggestions or improvements.
-
-## Author
-
-- **Your Name** - [yourusername](https://github.com/jwlionking)
+MIT. See [LICENSE](LICENSE).

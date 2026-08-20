@@ -1,0 +1,4 @@
+*.service
+!tests/
+*.log
+.DS_Store
